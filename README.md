@@ -4,6 +4,8 @@ WIP. Chess evaluator using minimax?
 
 ## Currently
 
+IT DOES NOTHING RIGHT NOW.
+
 Currently working on the foundation of the game and learning about minimax, alpha-beta pruning and NNUE's.
 
 ## TODO:
