@@ -1,9 +1,14 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 
 #define N_PIECES (12)
+#define BOARD_SQUARES (64)
+
+#define WHITE_TURN (true)
+#define BLACK_TURN (false)
 
 
 /*
@@ -66,6 +71,7 @@ typedef enum {
 
 typedef struct {
     uint64_t* pieces;
+    bool turn;
 } Board;
 
 
@@ -93,6 +99,7 @@ Board create_default_board()
 
     Board result;
     result.pieces = pieces;
+    result.turn = WHITE_TURN;
     return result;
 }
 
@@ -136,12 +143,56 @@ int evaluate_board(Board* board)
 }
 
 
+uint64_t get_all_occupied_squares(Board* board)
+{
+    uint64_t result = 0;
+    for (int i = 0; i < N_PIECES; ++i) {
+        result |= board->pieces[i];
+    }
+    return result;
+}
+
+
+typedef struct {
+    PIECE_INDEX piece_type;
+    uint64_t previous_position;
+    uint64_t next_position;
+} Move;
+
+
+uint64_t* get_pieces_positions(uint64_t pieces)
+{
+    int piece_count = count_bits(pieces);
+    uint64_t* pieces_positions = malloc(sizeof(uint64_t) * (piece_count + 1));
+    if (pieces_positions == NULL) {
+        fprintf(stderr, "Error: Memory allocation failed\n");
+        exit(1);
+    }
+
+    int index = 0;
+    uint64_t position = 1ULL;
+    for (int i = 0; i < BOARD_SQUARES; ++i) {
+        if ((pieces & position) != 0) {
+            pieces_positions[index] = position;
+            if ((++index) == piece_count) {
+                pieces_positions[index] = 0ULL;
+                return pieces_positions;
+            }
+        }
+        position = position << 1;
+    }
+
+    // Unreachable
+    fprintf(stderr, "Error: get_pieces_positions has a bug");
+    exit(1);
+}
+
+
 int main(void)
 {
     Board board = create_default_board();
 
     int evaluation = evaluate_board(&board);
-
     printf("eval: %d\n", evaluation);
 
     return 0;
