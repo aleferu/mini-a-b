@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 
-#define N_PIECES 12
+#define N_PIECES (12)
 
 
 /*
@@ -72,6 +72,10 @@ typedef struct {
 Board create_default_board()
 {
     uint64_t* pieces = malloc(sizeof(uint64_t) * N_PIECES);
+    if (pieces == NULL) {
+        fprintf(stderr, "Error: Memory allocation failed\n");
+        exit(1);
+    }
 
     pieces[W_PAWN_I]   = W_PAWNS_S;
     pieces[W_ROOK_I]   = W_ROOKS_S;
