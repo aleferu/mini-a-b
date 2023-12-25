@@ -12,7 +12,8 @@ Currently working on the foundation of the game and learning about minimax, alph
 
 | **TODO**                   | **Status**           |
 | :------------------------- | :------------------: |
-| Evaluaton of current board | On it                |
+| Evaluaton of current board | Done but may change  |
+| Move generator             | On it                |
 | Minimax                    | Soon?                |
 | Alpha-beta pruning         | Studying             |
 | NNUE                       | Maybe other project? |
