@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -72,10 +73,31 @@ int evaluate_board(Board* board)
 }
 
 
+// Not sure I'll ever use it
 uint64_t get_all_occupied_squares(Board* board)
 {
     uint64_t result = 0;
-    for (int i = 0; i < N_PIECES; ++i) {
+    for (size_t i = 0; i < N_PIECES; ++i) {
+        result |= board->pieces[i];
+    }
+    return result;
+}
+
+
+uint64_t get_white_occupied_squares(Board* board)
+{
+    uint64_t result = 0;
+    for (size_t i = 0; i < N_PIECES / 2; ++i) {
+        result |= board->pieces[i];
+    }
+    return result;
+}
+
+
+uint64_t get_black_occupied_squares(Board* board)
+{
+    uint64_t result = 0;
+    for (size_t i = N_PIECES / 2; i < N_PIECES; ++i) {
         result |= board->pieces[i];
     }
     return result;
@@ -85,7 +107,7 @@ uint64_t get_all_occupied_squares(Board* board)
 uint64_t* get_pieces_positions(uint64_t pieces)
 {
     uint64_t piece_count = (uint64_t) count_bits(pieces);
-    uint64_t* pieces_positions = malloc(sizeof(uint64_t) * (piece_count + 1));
+    uint64_t* pieces_positions = malloc(sizeof(uint64_t) * piece_count);
     if (pieces_positions == NULL) {
         fprintf(stderr, "Error: Memory allocation failed\n");
         exit(1);
@@ -93,25 +115,87 @@ uint64_t* get_pieces_positions(uint64_t pieces)
 
     size_t index = 0;
     uint64_t position = 1ULL;
-    for (size_t i = 0; i < BOARD_SQUARES; ++i) {
+    for (size_t _ = 0; _ < BOARD_SQUARES; ++_) {
         if ((pieces & position) != 0) {
-            pieces_positions[index] = position;
-            if ((++index) == piece_count) {
-                pieces_positions[index] = 0ULL;
-                return pieces_positions;
-            }
+            pieces_positions[index++] = position;
         }
         position = position << 1;
     }
 
-    // Unreachable
-    fprintf(stderr, "Error: get_pieces_positions has a bug\n");
-    fprintf(stderr, "pieces: %zu\n", pieces);
-    fprintf(stderr, "position: %zu\n", position);
-    fprintf(stderr, "index: %zu\n", index);
-    fprintf(stderr, "pieces_position:\n");
-    for (size_t i = 0; i < piece_count; ++i) {
-        fprintf(stderr, "\t%zu\n", pieces_positions[i]);
+    return pieces_positions;
+}
+
+
+MoveArray create_move_array(void)
+{
+    size_t capacity = 20;
+    Move* moves = malloc(sizeof(Move) * capacity);
+    if (moves == NULL) {
+        fprintf(stderr, "Error: Memory allocation failed\n");
+        exit(1);
     }
-    exit(1);
+    MoveArray result;
+    result.moves = moves;
+    result.count = 0;
+    result.capacity = capacity;
+    return result;
+}
+
+
+bool is_piece_in_row(uint64_t piece_position, uint row)
+{
+    return ((piece_position >> ((row - 1) * 8)) & 0xFF) != 0;
+}
+
+
+void insert_move_into_array(MoveArray* arr, Move item)
+{
+    if (arr->count == arr->capacity) {
+        Move* temp = realloc(arr->moves, sizeof(Move) * arr->capacity * 2);
+        if (temp == NULL) {
+            fprintf(stderr, "Error: Memory allocation failed\n");
+            exit(1);
+        } else {
+            arr->moves = temp;
+            arr->capacity *= 2;
+        }
+    }
+    arr->moves[arr->count++] = item;
+}
+
+
+void insert_pseudomoves_from_piece(MoveArray* move_array, PIECE_INDEX piece_type, uint64_t piece_position, uint64_t occupied_squares)
+{
+    switch (piece_type) {
+    case W_PAWN_I:
+        if (is_piece_in_row(piece_position, 2)) {
+            uint64_t potential_new_position = piece_position << 16;
+            if ((potential_new_position & occupied_squares) == 0ULL) {
+                insert_move_into_array(move_array, (Move) {piece_type, piece_position, potential_new_position});
+            }
+        }
+        uint64_t potential_new_position = piece_position << 8;
+        if ((potential_new_position & occupied_squares) == 0ULL) {
+            insert_move_into_array(move_array, (Move) {piece_type, piece_position, potential_new_position});
+        }
+        break;
+    }
+    // TODO
+}
+
+
+MoveArray get_pseudomoves_from_board(Board* board)
+{
+    MoveArray move_array = create_move_array();
+    size_t starting_index = board->turn == WHITE_TURN ? 0 : (N_PIECES / 2);
+    size_t ending_index = starting_index + N_PIECES / 2;
+    uint64_t occupied_squares = board->turn == WHITE_TURN ? get_white_occupied_squares(board) : get_black_occupied_squares(board);
+    for (size_t i = starting_index; i < ending_index; ++i) {
+        uint64_t* pieces_positions = get_pieces_positions(board->pieces[i]);
+        int piece_count = count_bits(board->pieces[i]);
+        for (size_t j = 0; j < (size_t) piece_count; ++j) {
+            insert_pseudomoves_from_piece(&move_array, i, pieces_positions[j], occupied_squares);
+        }
+    }
+    return move_array;
 }

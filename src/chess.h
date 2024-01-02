@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 
@@ -90,13 +91,17 @@ typedef struct {
 } Move;
 
 
+typedef struct {
+    Move* moves;
+    size_t capacity;
+    size_t count;
+} MoveArray;
+
+
 /**
  * Functions
  */
 
 Board create_default_board(void);
 void destroy_board(Board* board);
-int count_bits(uint64_t number);
 int evaluate_board(Board* board);
-uint64_t get_all_occupied_squares(Board* board);
-uint64_t* get_pieces_positions(uint64_t pieces);
