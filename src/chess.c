@@ -96,7 +96,7 @@ uint64_t* get_pieces_positions(uint64_t pieces)
     for (size_t i = 0; i < BOARD_SQUARES; ++i) {
         if ((pieces & position) != 0) {
             pieces_positions[index] = position;
-            if (((uint64_t) ++index) == piece_count) {
+            if ((++index) == piece_count) {
                 pieces_positions[index] = 0ULL;
                 return pieces_positions;
             }
