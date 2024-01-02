@@ -91,9 +91,9 @@ uint64_t* get_pieces_positions(uint64_t pieces)
         exit(1);
     }
 
-    int index = 0;
+    size_t index = 0;
     uint64_t position = 1ULL;
-    for (int i = 0; i < BOARD_SQUARES; ++i) {
+    for (size_t i = 0; i < BOARD_SQUARES; ++i) {
         if ((pieces & position) != 0) {
             pieces_positions[index] = position;
             if (((uint64_t) ++index) == piece_count) {
@@ -105,6 +105,13 @@ uint64_t* get_pieces_positions(uint64_t pieces)
     }
 
     // Unreachable
-    fprintf(stderr, "Error: get_pieces_positions has a bug");
+    fprintf(stderr, "Error: get_pieces_positions has a bug\n");
+    fprintf(stderr, "pieces: %zu\n", pieces);
+    fprintf(stderr, "position: %zu\n", position);
+    fprintf(stderr, "index: %zu\n", index);
+    fprintf(stderr, "pieces_position:\n");
+    for (size_t i = 0; i < piece_count; ++i) {
+        fprintf(stderr, "\t%zu\n", pieces_positions[i]);
+    }
     exit(1);
 }
