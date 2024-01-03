@@ -9,6 +9,8 @@
 
 #define N_PIECES (12)
 #define BOARD_SQUARES (64)
+#define ROW_SQUARES (8)
+#define COL_SQUARES (8)
 
 #define WHITE_TURN (true)
 #define BLACK_TURN (false)
@@ -81,6 +83,8 @@ typedef enum {
 typedef struct {
     uint64_t* pieces;
     bool turn;
+    bool en_passant;
+    uint64_t en_passant_square;
 } Board;
 
 

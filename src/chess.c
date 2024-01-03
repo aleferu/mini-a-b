@@ -148,6 +148,17 @@ bool is_piece_in_row(uint64_t piece_position, uint row)
 }
 
 
+bool is_piece_in_column(uint64_t piece_position, uint col)
+{
+    uint64_t collider = 0ULL;
+    uint64_t column = (COL_SQUARES + 1) - col; // 1 -> 8 ; 8 -> 1 ; 4 -> 5
+    for (size_t i = 0; i < COL_SQUARES; ++i) {
+        collider |= (1ULL << (column + i * COL_SQUARES));
+    }
+    return piece_position & collider;
+}
+
+
 void insert_move_into_array(MoveArray* arr, Move item)
 {
     if (arr->count == arr->capacity) {
@@ -164,23 +175,63 @@ void insert_move_into_array(MoveArray* arr, Move item)
 }
 
 
-void insert_pseudomoves_from_piece(MoveArray* move_array, PIECE_INDEX piece_type, uint64_t piece_position, uint64_t occupied_squares)
+void insert_moves_into_array(MoveArray* arr, PIECE_INDEX piece_type, uint64_t previous_position, uint64_t next_positions)
 {
+    int move_counter = count_bits(next_positions);
+    uint64_t* new_positions = get_pieces_positions(next_positions);
+    for (size_t i = 0; i < (size_t) move_counter; ++i) {
+        insert_move_into_array(arr, (Move) {piece_type, previous_position, new_positions[i]});
+    }
+}
+
+
+uint64_t get_pseudomoves_from_pawn(Board* board, uint64_t piece_position, uint64_t same_color_occupied_squares, uint64_t opposite_color_occupied_squares)
+{
+    uint64_t found_positions = 0ULL;
+    uint64_t potential_new_position;
+    uint64_t occupied_squares = same_color_occupied_squares & opposite_color_occupied_squares;
+    // Double step
+    if (is_piece_in_row(piece_position, 2)) {
+        potential_new_position = piece_position << 16;
+        if ((potential_new_position & occupied_squares) == 0ULL) {
+            found_positions |= potential_new_position;
+        }
+    }
+    // Normal step
+    potential_new_position = piece_position << 8;
+    if ((potential_new_position & occupied_squares) == 0ULL) {
+        found_positions |= potential_new_position;
+    }
+    // Eat to the left
+    if (!is_piece_in_column(piece_position, 1)) {
+        potential_new_position = piece_position << 9;
+        if ((potential_new_position & opposite_color_occupied_squares) != 0ULL || (board->en_passant && board->en_passant_square == potential_new_position)) {
+            found_positions |= potential_new_position;
+        }
+    }
+    // Eat to the right
+    if (!is_piece_in_column(piece_position, 8)) {
+        potential_new_position = piece_position << 7;
+        if ((potential_new_position & opposite_color_occupied_squares) != 0ULL || (board->en_passant && board->en_passant_square == potential_new_position)) {
+            found_positions |= potential_new_position;
+        }
+    }
+    return found_positions;
+}
+
+
+void insert_pseudomoves_from_piece(Board* board, MoveArray* move_array, PIECE_INDEX piece_type, uint64_t piece_position, uint64_t same_color_occupied_squares, uint64_t opposite_color_occupied_squares)
+{
+    uint64_t next_positions;
     switch (piece_type) {
     case W_PAWN_I:
-        if (is_piece_in_row(piece_position, 2)) {
-            uint64_t potential_new_position = piece_position << 16;
-            if ((potential_new_position & occupied_squares) == 0ULL) {
-                insert_move_into_array(move_array, (Move) {piece_type, piece_position, potential_new_position});
-            }
-        }
-        uint64_t potential_new_position = piece_position << 8;
-        if ((potential_new_position & occupied_squares) == 0ULL) {
-            insert_move_into_array(move_array, (Move) {piece_type, piece_position, potential_new_position});
-        }
+        next_positions = get_pseudomoves_from_pawn(board, piece_position, same_color_occupied_squares, opposite_color_occupied_squares);
         break;
+    default:
+        fprintf(stderr, "Unreachable code reached at insert_pseudomoves_from_piece");
+        exit(1);
     }
-    // TODO
+    insert_moves_into_array(move_array, piece_type, piece_position, next_positions);
 }
 
 
@@ -189,13 +240,20 @@ MoveArray get_pseudomoves_from_board(Board* board)
     MoveArray move_array = create_move_array();
     size_t starting_index = board->turn == WHITE_TURN ? 0 : (N_PIECES / 2);
     size_t ending_index = starting_index + N_PIECES / 2;
-    uint64_t occupied_squares = board->turn == WHITE_TURN ? get_white_occupied_squares(board) : get_black_occupied_squares(board);
+    uint64_t same_color_occupied_squares = get_white_occupied_squares(board);
+    uint64_t opposite_color_occupied_squares = get_black_occupied_squares(board);
+    if (!board->turn == WHITE_TURN) {
+        uint64_t temp = same_color_occupied_squares;
+        same_color_occupied_squares = opposite_color_occupied_squares;
+        opposite_color_occupied_squares = temp;
+    }
     for (size_t i = starting_index; i < ending_index; ++i) {
         uint64_t* pieces_positions = get_pieces_positions(board->pieces[i]);
         int piece_count = count_bits(board->pieces[i]);
         for (size_t j = 0; j < (size_t) piece_count; ++j) {
-            insert_pseudomoves_from_piece(&move_array, i, pieces_positions[j], occupied_squares);
+            insert_pseudomoves_from_piece(board, &move_array, i, pieces_positions[j], same_color_occupied_squares, opposite_color_occupied_squares);
         }
+        free(pieces_positions);
     }
     return move_array;
 }
