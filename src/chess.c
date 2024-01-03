@@ -148,6 +148,17 @@ bool is_piece_in_row(uint64_t piece_position, uint row)
 }
 
 
+size_t get_piece_row(uint64_t piece_position)
+{
+    for (size_t i = 0; i < ROW_SQUARES; ++i) {
+        if ((piece_position & (0xFFULL << (i * ROW_SQUARES))) != 0ULL)
+            return i + 1;
+    }
+    fprintf(stderr, "Error: get_piece_row failed\n");
+    exit(1);
+}
+
+
 bool is_piece_in_column(uint64_t piece_position, uint col)
 {
     uint64_t collider = 0ULL;
@@ -156,6 +167,22 @@ bool is_piece_in_column(uint64_t piece_position, uint col)
         collider |= (1ULL << (column + i * COL_SQUARES));
     }
     return piece_position & collider;
+}
+
+
+size_t get_piece_col(uint64_t piece_position)
+{
+    uint64_t collider = 0ULL;
+    for (size_t i = 0; i < COL_SQUARES; ++i) {
+        collider |= (1ULL << (i * COL_SQUARES));
+    }
+    for (size_t i = 0; i < COL_SQUARES; ++i) {
+        if ((collider & piece_position) != 0ULL)
+            return COL_SQUARES - i;
+        collider <<= 1;
+    }
+    fprintf(stderr, "Error: get_piece_col failed\n");
+    exit(1);
 }
 
 
