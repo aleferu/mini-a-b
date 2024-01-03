@@ -255,6 +255,40 @@ uint64_t get_pseudomoves_from_black_pawn(Board* board, uint64_t piece_position, 
 }
 
 
+uint64_t get_pseudomoves_from_rook(uint64_t piece_position, uint64_t same_color_occupied_squares, uint64_t opposite_color_occupied_squares)
+{
+    uint64_t found_positions = 0ULL;
+    for (size_t i = 0; i < 4; ++i) {
+        uint64_t current_square = piece_position;
+        while (true) {
+            if (i == 0) { // left
+                if (is_piece_in_column(current_square, 8))
+                    break;
+                current_square <<= 1;
+            } else if (i == 1) { // right
+                if (is_piece_in_column(current_square, 1))
+                    break;
+                current_square >>= 1;
+            } else if (i == 2) { // up
+                if (is_piece_in_row(current_square, 8))
+                    break;
+                current_square <<= 8;
+            } else { // down
+                if (is_piece_in_row(current_square, 1))
+                    break;
+                current_square >>= 8;
+            }
+            if ((current_square & same_color_occupied_squares) != 0ULL)
+                break;
+            found_positions |= current_square;
+            if ((current_square & opposite_color_occupied_squares) != 0ULL)
+                break;
+        }
+    }
+    return found_positions;
+}
+
+
 void insert_pseudomoves_from_piece(Board* board, MoveArray* move_array, PIECE_INDEX piece_type, uint64_t piece_position, uint64_t same_color_occupied_squares, uint64_t opposite_color_occupied_squares)
 {
     uint64_t next_positions;
@@ -265,6 +299,18 @@ void insert_pseudomoves_from_piece(Board* board, MoveArray* move_array, PIECE_IN
     case B_PAWN_I:
         next_positions = get_pseudomoves_from_black_pawn(board, piece_position, same_color_occupied_squares, opposite_color_occupied_squares);
         break;
+    case W_ROOK_I:
+    case B_ROOK_I:
+        next_positions = get_pseudomoves_from_rook(piece_position, same_color_occupied_squares, opposite_color_occupied_squares);
+        break;
+    case W_KNIGHT_I:
+    case W_BISHOP_I:
+    case W_QUEEN_I:
+    case W_KING_I:
+    case B_KNIGHT_I:
+    case B_BISHOP_I:
+    case B_QUEEN_I:
+    case B_KING_I:
     default:
         fprintf(stderr, "Unreachable code reached at insert_pseudomoves_from_piece");
         exit(1);
