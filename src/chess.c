@@ -264,6 +264,7 @@ void insert_pseudomoves_from_piece(Board* board, MoveArray* move_array, PIECE_IN
         break;
     case B_PAWN_I:
         next_positions = get_pseudomoves_from_black_pawn(board, piece_position, same_color_occupied_squares, opposite_color_occupied_squares);
+        break;
     default:
         fprintf(stderr, "Unreachable code reached at insert_pseudomoves_from_piece");
         exit(1);
