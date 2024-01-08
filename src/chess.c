@@ -316,6 +316,26 @@ uint64_t get_pseudomoves_from_rook(uint64_t piece_position, uint64_t same_color_
 }
 
 
+uint64_t get_pseudomoves_from_knight(uint64_t piece_position, uint64_t same_color_occupied_squares)
+{
+    uint64_t found_positions = 0ULL;
+    int piece_col = (int) get_piece_col(piece_position);
+    int piece_row = (int) get_piece_row(piece_position);
+    int knight_offsets[8] = { -17, -15, -10, -6, 6, 10, 15, 17 };
+    for (size_t i = 0; i < 8; ++i) {
+        uint64_t potential_new_position = piece_position << knight_offsets[i];
+        if (potential_new_position > 0 && (potential_new_position & same_color_occupied_squares) == 0) {
+            int col_difference = piece_col - (int) get_piece_col(potential_new_position);
+            int row_difference = piece_row - (int) get_piece_row(potential_new_position);
+            if ((ABS(col_difference) == 1 && ABS(row_difference) == 2) || (ABS(col_difference) == 2 && ABS(row_difference) == 1)) {
+                found_positions |= potential_new_position;
+            }
+        }
+    }
+    return found_positions;
+}
+
+
 void insert_pseudomoves_from_piece(Board* board, MoveArray* move_array, PIECE_INDEX piece_type, uint64_t piece_position, uint64_t same_color_occupied_squares, uint64_t opposite_color_occupied_squares)
 {
     uint64_t next_positions;
@@ -331,10 +351,12 @@ void insert_pseudomoves_from_piece(Board* board, MoveArray* move_array, PIECE_IN
         next_positions = get_pseudomoves_from_rook(piece_position, same_color_occupied_squares, opposite_color_occupied_squares);
         break;
     case W_KNIGHT_I:
+    case B_KNIGHT_I:
+        next_positions = get_pseudomoves_from_knight(piece_position, same_color_occupied_squares);
+        break;
     case W_BISHOP_I:
     case W_QUEEN_I:
     case W_KING_I:
-    case B_KNIGHT_I:
     case B_BISHOP_I:
     case B_QUEEN_I:
     case B_KING_I:
