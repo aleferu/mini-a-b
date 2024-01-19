@@ -1,3 +1,6 @@
+#ifndef CHESS_H // TODO: Better name lmao
+#define CHESS_H
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -112,3 +115,5 @@ typedef struct {
 Board create_default_board(void);
 void destroy_board(Board* board);
 int evaluate_board(Board* board);
+
+#endif // CHESS_H
