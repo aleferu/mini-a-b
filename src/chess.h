@@ -112,8 +112,27 @@ typedef struct {
  * Functions
  */
 
-Board create_default_board(void);
+Board* create_default_board(void);
 void destroy_board(Board* board);
 int evaluate_board(Board* board);
+size_t count_bits(uint64_t number);
+uint64_t get_all_occupied_squares(Board* board);
+uint64_t get_white_occupied_squares(Board* board);
+uint64_t get_black_occupied_squares(Board* board);
+uint64_t* get_pieces_positions(uint64_t pieces);
+MoveArray* create_move_array(void);
+bool is_piece_in_row(uint64_t piece_position, size_t row);
+size_t get_piece_row(uint64_t piece_position);
+bool is_piece_in_column(uint64_t piece_position, size_t col);
+size_t get_piece_col(uint64_t piece_position);
+void insert_move_into_array(MoveArray* arr, Move item);
+void insert_moves_into_array(MoveArray* arr, PIECE_INDEX piece_type, uint64_t previous_position, uint64_t next_positions);
+uint64_t get_pseudomoves_from_white_pawn(Board* board, uint64_t piece_position, uint64_t same_color_occupied_squares, uint64_t opposite_color_occupied_squares);
+uint64_t get_pseudomoves_from_black_pawn(Board* board, uint64_t piece_position, uint64_t same_color_occupied_squares, uint64_t opposite_color_occupied_squares);
+uint64_t get_pseudomoves_from_rook(uint64_t piece_position, uint64_t same_color_occupied_squares, uint64_t opposite_color_occupied_squares);
+uint64_t get_pseudomoves_from_knight(uint64_t piece_position, uint64_t same_color_occupied_squares);
+void insert_pseudomoves_from_piece(Board* board, MoveArray* move_array, PIECE_INDEX piece_type, uint64_t piece_position, uint64_t same_color_occupied_squares, uint64_t opposite_color_occupied_squares);
+MoveArray* get_pseudomoves_from_board(Board* board);
+
 
 #endif // CHESS_H

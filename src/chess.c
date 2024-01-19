@@ -5,7 +5,7 @@
 #include "chess.h"
 
 
-Board create_default_board(void)
+Board* create_default_board(void)
 {
     uint64_t* pieces = malloc(sizeof(uint64_t) * N_PIECES);
     if (pieces == NULL) {
@@ -27,9 +27,9 @@ Board create_default_board(void)
     pieces[B_QUEEN_I]  = B_QUEEN_S;
     pieces[B_KING_I]   = B_KING_S;
 
-    Board result;
-    result.pieces = pieces;
-    result.turn = WHITE_TURN;
+    Board* result = (Board*) malloc(sizeof(Board));
+    result->pieces = pieces;
+    result->turn = WHITE_TURN;
     return result;
 }
 
@@ -37,14 +37,13 @@ Board create_default_board(void)
 void destroy_board(Board* board)
 {
     free(board->pieces);
-    board->pieces = NULL;
+    free(board);
 }
 
 
-// Can be uint
-int count_bits(uint64_t number)
+size_t count_bits(uint64_t number)
 {
-    int counter = 0;
+    size_t counter = 0;
     while (number) {
         number = number & (number - 1);
         counter += 1;
@@ -57,17 +56,17 @@ int evaluate_board(Board* board)
 {
     int result = 0;
 
-    result += count_bits(board->pieces[W_PAWN_I])   * PAWN_V;
-    result += count_bits(board->pieces[W_ROOK_I])   * ROOK_V;
-    result += count_bits(board->pieces[W_KNIGHT_I]) * KNIGHT_V;
-    result += count_bits(board->pieces[W_BISHOP_I]) * BISHOP_V;
-    result += count_bits(board->pieces[W_QUEEN_I])  * QUEEN_V;
+    result += (int) count_bits(board->pieces[W_PAWN_I])   * PAWN_V;
+    result += (int) count_bits(board->pieces[W_ROOK_I])   * ROOK_V;
+    result += (int) count_bits(board->pieces[W_KNIGHT_I]) * KNIGHT_V;
+    result += (int) count_bits(board->pieces[W_BISHOP_I]) * BISHOP_V;
+    result += (int) count_bits(board->pieces[W_QUEEN_I])  * QUEEN_V;
 
-    result -= count_bits(board->pieces[B_PAWN_I])   * PAWN_V;
-    result -= count_bits(board->pieces[B_ROOK_I])   * ROOK_V;
-    result -= count_bits(board->pieces[B_KNIGHT_I]) * KNIGHT_V;
-    result -= count_bits(board->pieces[B_BISHOP_I]) * BISHOP_V;
-    result -= count_bits(board->pieces[B_QUEEN_I])  * QUEEN_V;
+    result -= (int) count_bits(board->pieces[B_PAWN_I])   * PAWN_V;
+    result -= (int) count_bits(board->pieces[B_ROOK_I])   * ROOK_V;
+    result -= (int) count_bits(board->pieces[B_KNIGHT_I]) * KNIGHT_V;
+    result -= (int) count_bits(board->pieces[B_BISHOP_I]) * BISHOP_V;
+    result -= (int) count_bits(board->pieces[B_QUEEN_I])  * QUEEN_V;
 
     return result;
 }
@@ -126,7 +125,7 @@ uint64_t* get_pieces_positions(uint64_t pieces)
 }
 
 
-MoveArray create_move_array(void)
+MoveArray* create_move_array(void)
 {
     size_t capacity = 20;
     Move* moves = malloc(sizeof(Move) * capacity);
@@ -134,15 +133,15 @@ MoveArray create_move_array(void)
         fprintf(stderr, "Error: Memory allocation failed\n");
         exit(1);
     }
-    MoveArray result;
-    result.moves = moves;
-    result.count = 0;
-    result.capacity = capacity;
+    MoveArray* result = (MoveArray*) malloc(sizeof(MoveArray));
+    result->moves = moves;
+    result->count = 0;
+    result->capacity = capacity;
     return result;
 }
 
 
-bool is_piece_in_row(uint64_t piece_position, uint row)
+bool is_piece_in_row(uint64_t piece_position, size_t row)
 {
     return ((piece_position >> ((row - 1) * 8)) & 0xFF) != 0;
 }
@@ -159,7 +158,7 @@ size_t get_piece_row(uint64_t piece_position)
 }
 
 
-bool is_piece_in_column(uint64_t piece_position, uint col)
+bool is_piece_in_column(uint64_t piece_position, size_t col)
 {
     uint64_t collider = 0ULL;
     uint64_t column = (COL_SQUARES + 1) - col; // 1 -> 8 ; 8 -> 1 ; 4 -> 5
@@ -204,9 +203,9 @@ void insert_move_into_array(MoveArray* arr, Move item)
 
 void insert_moves_into_array(MoveArray* arr, PIECE_INDEX piece_type, uint64_t previous_position, uint64_t next_positions)
 {
-    int move_counter = count_bits(next_positions);
+    size_t move_counter = count_bits(next_positions);
     uint64_t* new_positions = get_pieces_positions(next_positions);
-    for (size_t i = 0; i < (size_t) move_counter; ++i) {
+    for (size_t i = 0; i < move_counter; ++i) {
         insert_move_into_array(arr, (Move) {piece_type, previous_position, new_positions[i]});
     }
 }
@@ -368,9 +367,9 @@ void insert_pseudomoves_from_piece(Board* board, MoveArray* move_array, PIECE_IN
 }
 
 
-MoveArray get_pseudomoves_from_board(Board* board)
+MoveArray* get_pseudomoves_from_board(Board* board)
 {
-    MoveArray move_array = create_move_array();
+    MoveArray* move_array = create_move_array();
     size_t starting_index = board->turn == WHITE_TURN ? 0 : (N_PIECES / 2);
     size_t ending_index = starting_index + N_PIECES / 2;
     uint64_t same_color_occupied_squares = get_white_occupied_squares(board);
@@ -382,9 +381,9 @@ MoveArray get_pseudomoves_from_board(Board* board)
     }
     for (size_t i = starting_index; i < ending_index; ++i) {
         uint64_t* pieces_positions = get_pieces_positions(board->pieces[i]);
-        int piece_count = count_bits(board->pieces[i]);
-        for (size_t j = 0; j < (size_t) piece_count; ++j) {
-            insert_pseudomoves_from_piece(board, &move_array, i, pieces_positions[j], same_color_occupied_squares, opposite_color_occupied_squares);
+        size_t piece_count = count_bits(board->pieces[i]);
+        for (size_t j = 0; j < piece_count; ++j) {
+            insert_pseudomoves_from_piece(board, move_array, i, pieces_positions[j], same_color_occupied_squares, opposite_color_occupied_squares);
         }
         free(pieces_positions);
     }
