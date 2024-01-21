@@ -103,9 +103,9 @@ uint64_t get_black_occupied_squares(Board* board)
 }
 
 
-uint64_t* get_pieces_positions(uint64_t pieces)
+PositionArray* get_pieces_positions(uint64_t pieces)
 {
-    uint64_t piece_count = (uint64_t) count_bits(pieces);
+    size_t piece_count = count_bits(pieces);
     uint64_t* pieces_positions = malloc(sizeof(uint64_t) * piece_count);
     if (pieces_positions == NULL) {
         fprintf(stderr, "Error: Memory allocation failed\n");
@@ -121,23 +121,17 @@ uint64_t* get_pieces_positions(uint64_t pieces)
         position = position << 1;
     }
 
-    return pieces_positions;
+    PositionArray* result = malloc(sizeof(PositionArray));
+    result->count = piece_count;
+    result->positions = pieces_positions;
+    return result;
 }
 
 
-MoveArray* create_move_array(void)
+void destroy_position_array(PositionArray* position_array)
 {
-    size_t capacity = 20;
-    Move* moves = malloc(sizeof(Move) * capacity);
-    if (moves == NULL) {
-        fprintf(stderr, "Error: Memory allocation failed\n");
-        exit(1);
-    }
-    MoveArray* result = (MoveArray*) malloc(sizeof(MoveArray));
-    result->moves = moves;
-    result->count = 0;
-    result->capacity = capacity;
-    return result;
+    free(position_array->positions);
+    free(position_array);
 }
 
 
@@ -163,13 +157,13 @@ bool is_piece_in_column(uint64_t piece_position, size_t col)
     uint64_t collider = 0ULL;
     uint64_t column = (COL_SQUARES + 1) - col; // 1 -> 8 ; 8 -> 1 ; 4 -> 5
     for (size_t i = 0; i < COL_SQUARES; ++i) {
-        collider |= (1ULL << (column + i * COL_SQUARES));
+        collider |= (1ULL << (column + i * COL_SQUARES - 1));
     }
     return piece_position & collider;
 }
 
 
-size_t get_piece_col(uint64_t piece_position)
+size_t get_piece_column(uint64_t piece_position)
 {
     uint64_t collider = 0ULL;
     for (size_t i = 0; i < COL_SQUARES; ++i) {
@@ -182,6 +176,28 @@ size_t get_piece_col(uint64_t piece_position)
     }
     fprintf(stderr, "Error: get_piece_col failed\n");
     exit(1);
+}
+
+
+MoveArray* create_move_array(void)
+{
+    size_t capacity = 20;
+    Move* moves = malloc(sizeof(Move) * capacity);
+    if (moves == NULL) {
+        fprintf(stderr, "Error: Memory allocation failed\n");
+        exit(1);
+    }
+    MoveArray* result = (MoveArray*) malloc(sizeof(MoveArray));
+    result->moves = moves;
+    result->count = 0;
+    result->capacity = capacity;
+    return result;
+}
+
+void destroy_move_array(MoveArray* move_array)
+{
+    free(move_array->moves);
+    free(move_array);
 }
 
 
@@ -203,11 +219,11 @@ void insert_move_into_array(MoveArray* arr, Move item)
 
 void insert_moves_into_array(MoveArray* arr, PIECE_INDEX piece_type, uint64_t previous_position, uint64_t next_positions)
 {
-    size_t move_counter = count_bits(next_positions);
-    uint64_t* new_positions = get_pieces_positions(next_positions);
-    for (size_t i = 0; i < move_counter; ++i) {
-        insert_move_into_array(arr, (Move) {piece_type, previous_position, new_positions[i]});
+    PositionArray* new_positions = get_pieces_positions(next_positions);
+    for (size_t i = 0; i < new_positions->count; ++i) {
+        insert_move_into_array(arr, (Move) {piece_type, previous_position, new_positions->positions[i]});
     }
+    destroy_position_array(new_positions);
 }
 
 
@@ -318,13 +334,13 @@ uint64_t get_pseudomoves_from_rook(uint64_t piece_position, uint64_t same_color_
 uint64_t get_pseudomoves_from_knight(uint64_t piece_position, uint64_t same_color_occupied_squares)
 {
     uint64_t found_positions = 0ULL;
-    int piece_col = (int) get_piece_col(piece_position);
+    int piece_col = (int) get_piece_column(piece_position);
     int piece_row = (int) get_piece_row(piece_position);
     int knight_offsets[8] = { -17, -15, -10, -6, 6, 10, 15, 17 };
     for (size_t i = 0; i < 8; ++i) {
         uint64_t potential_new_position = piece_position << knight_offsets[i];
         if (potential_new_position > 0 && (potential_new_position & same_color_occupied_squares) == 0) {
-            int col_difference = piece_col - (int) get_piece_col(potential_new_position);
+            int col_difference = piece_col - (int) get_piece_column(potential_new_position);
             int row_difference = piece_row - (int) get_piece_row(potential_new_position);
             if ((ABS(col_difference) == 1 && ABS(row_difference) == 2) || (ABS(col_difference) == 2 && ABS(row_difference) == 1)) {
                 found_positions |= potential_new_position;
@@ -380,12 +396,11 @@ MoveArray* get_pseudomoves_from_board(Board* board)
         opposite_color_occupied_squares = temp;
     }
     for (size_t i = starting_index; i < ending_index; ++i) {
-        uint64_t* pieces_positions = get_pieces_positions(board->pieces[i]);
-        size_t piece_count = count_bits(board->pieces[i]);
-        for (size_t j = 0; j < piece_count; ++j) {
-            insert_pseudomoves_from_piece(board, move_array, i, pieces_positions[j], same_color_occupied_squares, opposite_color_occupied_squares);
+        PositionArray* pieces_positions = get_pieces_positions(board->pieces[i]);
+        for (size_t j = 0; j < pieces_positions->count; ++j) {
+            insert_pseudomoves_from_piece(board, move_array, i, pieces_positions->positions[j], same_color_occupied_squares, opposite_color_occupied_squares);
         }
-        free(pieces_positions);
+        destroy_position_array(pieces_positions);
     }
     return move_array;
 }
