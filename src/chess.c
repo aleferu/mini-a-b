@@ -385,6 +385,14 @@ uint64_t get_pseudomoves_from_bishop(uint64_t piece_position, uint64_t same_colo
 }
 
 
+uint64_t get_pseudomoves_from_queen(uint64_t piece_position, uint64_t same_color_occupied_squares, uint64_t opposite_color_occupied_squares)
+{
+    uint64_t pseudomoves_as_bishop = get_pseudomoves_from_bishop(piece_position, same_color_occupied_squares, opposite_color_occupied_squares);
+    uint64_t pseudomoves_as_rook = get_pseudomoves_from_rook(piece_position, same_color_occupied_squares, opposite_color_occupied_squares);
+    return pseudomoves_as_bishop & pseudomoves_as_rook;
+}
+
+
 void insert_pseudomoves_from_piece(Board* board, MoveArray* move_array, PIECE_INDEX piece_type, uint64_t piece_position, uint64_t same_color_occupied_squares, uint64_t opposite_color_occupied_squares)
 {
     uint64_t next_positions;
@@ -408,8 +416,10 @@ void insert_pseudomoves_from_piece(Board* board, MoveArray* move_array, PIECE_IN
         next_positions = get_pseudomoves_from_bishop(piece_position, same_color_occupied_squares, opposite_color_occupied_squares);
         break;
     case W_QUEEN_I:
-    case W_KING_I:
     case B_QUEEN_I:
+        next_positions = get_pseudomoves_from_queen(piece_position, same_color_occupied_squares, opposite_color_occupied_squares);
+        break;
+    case W_KING_I:
     case B_KING_I:
     default:
         fprintf(stderr, "Unreachable code reached at insert_pseudomoves_from_piece");
