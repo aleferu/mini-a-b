@@ -405,7 +405,8 @@ void insert_pseudomoves_from_piece(Board* board, MoveArray* move_array, PIECE_IN
         break;
     case W_BISHOP_I:
     case B_BISHOP_I:
-        new_positions = get_pseudomoves_from_bishop(piece_position, same_color_occupied_squares, opposite_color_occupied_squares);
+        next_positions = get_pseudomoves_from_bishop(piece_position, same_color_occupied_squares, opposite_color_occupied_squares);
+        break;
     case W_QUEEN_I:
     case W_KING_I:
     case B_QUEEN_I:
