@@ -304,11 +304,11 @@ uint64_t get_pseudomoves_from_rook(uint64_t piece_position, uint64_t same_color_
         uint64_t current_square = piece_position;
         while (true) {
             if (i == 0) { // left
-                if (is_piece_in_column(current_square, 8))
+                if (is_piece_in_column(current_square, 1))
                     break;
                 current_square <<= 1;
             } else if (i == 1) { // right
-                if (is_piece_in_column(current_square, 1))
+                if (is_piece_in_column(current_square, 8))
                     break;
                 current_square >>= 1;
             } else if (i == 2) { // up
@@ -358,19 +358,19 @@ uint64_t get_pseudomoves_from_bishop(uint64_t piece_position, uint64_t same_colo
         uint64_t current_square = piece_position;
         while (true) {
             if (i == 0) { // up + right
-                if (is_piece_in_column(current_square, 1) || is_piece_in_row(current_square, 8))
+                if (is_piece_in_column(current_square, 8) || is_piece_in_row(current_square, 8))
                     break;
                 current_square <<= 7;
             } else if (i == 1) { // up + left
-                if (is_piece_in_column(current_square, 8) || is_piece_in_row(current_square, 8))
+                if (is_piece_in_column(current_square, 1) || is_piece_in_row(current_square, 8))
                     break;
                 current_square <<= 9;
             } else if (i == 2) { // down + right
-                if (is_piece_in_column(current_square, 1) || is_piece_in_row(current_square, 1))
+                if (is_piece_in_column(current_square, 8) || is_piece_in_row(current_square, 1))
                     break;
                 current_square >>= 9;
             } else { // down + left
-                if (is_piece_in_column(current_square, 8) || is_piece_in_row(current_square, 1))
+                if (is_piece_in_column(current_square, 1) || is_piece_in_row(current_square, 1))
                     break;
                 current_square >>= 7;
             }
@@ -390,6 +390,64 @@ uint64_t get_pseudomoves_from_queen(uint64_t piece_position, uint64_t same_color
     uint64_t pseudomoves_as_bishop = get_pseudomoves_from_bishop(piece_position, same_color_occupied_squares, opposite_color_occupied_squares);
     uint64_t pseudomoves_as_rook = get_pseudomoves_from_rook(piece_position, same_color_occupied_squares, opposite_color_occupied_squares);
     return pseudomoves_as_bishop & pseudomoves_as_rook;
+}
+
+
+uint64_t get_pseudomoves_from_king(uint64_t piece_position, uint64_t same_color_occupied_squares)
+{
+    uint64_t found_positions = 0ULL;
+
+    for (size_t i = 0; i < 8; ++i) {
+        uint64_t current_square = piece_position;
+
+        if (i == 0) { // left
+            if (is_piece_in_column(current_square, 1)) {
+                continue;
+            }
+            current_square <<= 1;
+        } else if (i == 1) { // right
+            if (is_piece_in_column(current_square, 8)) {
+                continue;
+            }
+            current_square >>= 1;
+        } else if (i == 2) { // up
+            if (is_piece_in_row(current_square, 8)) {
+                continue;
+            }
+            current_square <<= 8;
+        } else if (i == 3) { // down
+            if (is_piece_in_row(current_square, 1)) {
+                continue;
+            }
+            current_square >>= 8;
+        } else if (i == 4) { // up + left
+            if (is_piece_in_row(current_square, 8) || is_piece_in_column(current_square, 1)) {
+                continue;
+            }
+            current_square <<= 9;
+        } else if (i == 5) { // up + right
+            if (is_piece_in_row(current_square, 8) || is_piece_in_column(current_square, 8)) {
+                continue;
+            }
+            current_square <<= 7;
+        } else if (i == 6) { // down + left
+            if (is_piece_in_row(current_square, 1) || is_piece_in_column(current_square, 1)) {
+                continue;
+            }
+            current_square >>= 7;
+        } else { // down + right
+            if (is_piece_in_row(current_square, 1) || is_piece_in_column(current_square, 8)) {
+                continue;
+            }
+            current_square >>= 9;
+        }
+
+        if ((current_square & same_color_occupied_squares) == 0ULL) {
+            found_positions |= current_square;
+        }
+    }
+
+    return found_positions;
 }
 
 
@@ -421,6 +479,8 @@ void insert_pseudomoves_from_piece(Board* board, MoveArray* move_array, PIECE_IN
         break;
     case W_KING_I:
     case B_KING_I:
+        next_positions = get_pseudomoves_from_king(piece_position, same_color_occupied_squares);
+        break;
     default:
         fprintf(stderr, "Unreachable code reached at insert_pseudomoves_from_piece");
         exit(1);

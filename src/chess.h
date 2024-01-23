@@ -141,6 +141,7 @@ uint64_t get_pseudomoves_from_rook(uint64_t piece_position, uint64_t same_color_
 uint64_t get_pseudomoves_from_knight(uint64_t piece_position, uint64_t same_color_occupied_squares);
 uint64_t get_pseudomoves_from_bishop(uint64_t piece_position, uint64_t same_color_occupied_squares, uint64_t opposite_color_occupied_squares);
 uint64_t get_pseudomoves_from_queen(uint64_t piece_position, uint64_t same_color_occupied_squares, uint64_t opposite_color_occupied_squares);
+uint64_t get_pseudomoves_from_king(uint64_t piece_position, uint64_t same_color_occupied_squares);
 void insert_pseudomoves_from_piece(Board* board, MoveArray* move_array, PIECE_INDEX piece_type, uint64_t piece_position, uint64_t same_color_occupied_squares, uint64_t opposite_color_occupied_squares);
 MoveArray* get_pseudomoves_from_board(Board* board);
 
