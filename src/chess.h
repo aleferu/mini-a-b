@@ -91,6 +91,7 @@ typedef struct {
     bool turn;
     bool en_passant;
     uint64_t en_passant_square;
+    uint8_t castling_rights;
 } Board;
 
 

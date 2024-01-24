@@ -30,6 +30,7 @@ Board* create_default_board(void)
     Board* result = (Board*) malloc(sizeof(Board));
     result->pieces = pieces;
     result->turn = WHITE_TURN;
+    result->castling_rights = 0b00001111;
     return result;
 }
 
@@ -509,4 +510,11 @@ MoveArray* get_pseudomoves_from_board(Board* board)
         destroy_position_array(pieces_positions);
     }
     return move_array;
+}
+
+
+MoveArray* get_moves_from_board(Board* board)
+{
+    MoveArray* pseudos = get_pseudomoves_from_board(board);
+    MoveArray* moves = get_moves_from_board(board);
 }
