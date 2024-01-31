@@ -535,13 +535,18 @@ MoveArray* get_pseudomoves_from_board(Board* board)
 }
 
 
-bool is_square_attacked(uint64_t piece_position, MoveArray* move_array) {
-    for (size_t i = 0; i < move_array->count; i++) {
-        if (move_array->moves[i].next_position == piece_position) {
-            return true; 
-        }
-    }
-    return false;
+// TODO: Everything
+bool is_square_attacked(uint64_t piece_position, Board* board)
+{
+    (void) piece_position;
+    (void) board;
+    return false; // placeholder
+    // for (size_t i = 0; i < move_array->count; ++i) {
+    //     if (move_array->moves[i].next_position == piece_position) {
+    //         return true; 
+    //     }
+    // }
+    // return false;
 }
 
 
@@ -551,16 +556,19 @@ MoveArray* get_moves_from_board(Board* board)
     MoveArray* moves = create_move_array();
 
     size_t king_index = board->turn == WHITE_TURN ? W_KING_I : B_KING_I;
-    bool is_king_in_check = is_square_attacked(board->pieces[king_index], pseudos);
+
+    // This is wrong, I'm checking if my own pieces attack my own king
+    // I need to modify is_square_attacked function
+    bool is_king_in_check = is_square_attacked(board->pieces[king_index], board);
 
     // NOTE: piece can't move if that creates a check!
+    // NOTE: YOU CAN castle even if the rook is attacked
     if (is_king_in_check) {
-        // TODO: block it or move king
+        // TODO: block it, move king or eat attacking piece
     } else {
         // TODO: Allow all pseudo moves (see NOTE)
         // TODO: Handle castling
         // NOTE: Can't castle if piece is attacking the in-between squares
-        // QUESTION: Can you castle when the rook is attacked?
     }
 
     // TODO: Maybe move previous logic to two separate functions?
