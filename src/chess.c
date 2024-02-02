@@ -204,39 +204,45 @@ size_t get_piece_column(uint64_t piece_position)
 
 MoveArray* create_move_array(void)
 {
-    size_t capacity = 20;
-    Move* moves = malloc(sizeof(Move) * capacity);
-    if (moves == NULL) {
+    MoveArray* result = (MoveArray*) malloc(sizeof(MoveArray));
+    if (result == NULL) {
+        fprintf(stderr,"Error: Memory allocation failed\n");
+        exit(1);
+    }
+    result->moves = (Move**) malloc(sizeof(Move*) * INITIAL_MOVE_ARRAY_CAPACITY);
+    if (result->moves == NULL) {
         fprintf(stderr, "Error: Memory allocation failed\n");
         exit(1);
     }
-    MoveArray* result = (MoveArray*) malloc(sizeof(MoveArray));
-    result->moves = moves;
     result->count = 0;
-    result->capacity = capacity;
+    result->capacity = INITIAL_MOVE_ARRAY_CAPACITY;
     return result;
 }
 
 void destroy_move_array(MoveArray* move_array)
 {
+    for (size_t i = 0; i < move_array->count; ++i) {
+        free(move_array->moves[i]);
+    }
     free(move_array->moves);
     free(move_array);
 }
 
 
-void insert_move_into_array(MoveArray* arr, Move item)
+void insert_move_into_array(MoveArray* arr, Move* move)
 {
     if (arr->count == arr->capacity) {
-        Move* temp = realloc(arr->moves, sizeof(Move) * arr->capacity * 2);
+        // I'm ending the program if realloc failes so
+        // I think could have done it without a temporal variable
+        Move** temp = (Move**) realloc(arr->moves, sizeof(Move*) * arr->capacity * 2);
         if (temp == NULL) {
             fprintf(stderr, "Error: Memory allocation failed\n");
             exit(1);
-        } else {
-            arr->moves = temp;
-            arr->capacity *= 2;
         }
+        arr->moves = temp;
+        arr->capacity *= 2;
     }
-    arr->moves[arr->count++] = item;
+    arr->moves[arr->count++] = move;
 }
 
 
@@ -244,7 +250,15 @@ void insert_moves_into_array(MoveArray* arr, PIECE_INDEX piece_type, uint64_t pr
 {
     PositionArray* new_positions = get_pieces_positions(next_positions);
     for (size_t i = 0; i < new_positions->count; ++i) {
-        insert_move_into_array(arr, (Move) {piece_type, previous_position, new_positions->positions[i]});
+        Move* move = (Move*) malloc(sizeof(Move));
+        if (move == NULL) {
+            fprintf(stderr, "Error: Memory allocation failed\n");
+            exit(1);
+        }
+        move->piece_type = piece_type;
+        move->previous_position = previous_position;
+        move->next_position = new_positions->positions[i];
+        insert_move_into_array(arr, move);
     }
     destroy_position_array(new_positions);
 }
@@ -532,47 +546,4 @@ MoveArray* get_pseudomoves_from_board(Board* board)
         destroy_position_array(pieces_positions);
     }
     return move_array;
-}
-
-
-// TODO: Everything
-bool is_square_attacked(uint64_t piece_position, Board* board)
-{
-    (void) piece_position;
-    (void) board;
-    return false; // placeholder
-    // for (size_t i = 0; i < move_array->count; ++i) {
-    //     if (move_array->moves[i].next_position == piece_position) {
-    //         return true; 
-    //     }
-    // }
-    // return false;
-}
-
-
-MoveArray* get_moves_from_board(Board* board)
-{
-    MoveArray* pseudos = get_pseudomoves_from_board(board);
-    MoveArray* moves = create_move_array();
-
-    size_t king_index = board->turn == WHITE_TURN ? W_KING_I : B_KING_I;
-
-    // This is wrong, I'm checking if my own pieces attack my own king
-    // I need to modify is_square_attacked function
-    bool is_king_in_check = is_square_attacked(board->pieces[king_index], board);
-
-    // NOTE: piece can't move if that creates a check!
-    // NOTE: YOU CAN castle even if the rook is attacked
-    if (is_king_in_check) {
-        // TODO: block it, move king or eat attacking piece
-    } else {
-        // TODO: Allow all pseudo moves (see NOTE)
-        // TODO: Handle castling
-        // NOTE: Can't castle if piece is attacking the in-between squares
-    }
-
-    // TODO: Maybe move previous logic to two separate functions?
-
-    destroy_move_array(pseudos);
-    return moves;
 }

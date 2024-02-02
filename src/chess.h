@@ -40,6 +40,8 @@
 #define ROW_SQUARES (8)
 #define COL_SQUARES (8)
 
+#define INITIAL_MOVE_ARRAY_CAPACITY (16)
+
 #define WHITE_TURN (true)
 #define BLACK_TURN (false)
 
@@ -131,7 +133,7 @@ typedef struct {
 
 
 typedef struct {
-    Move* moves;
+    Move** moves;
     size_t capacity;
     size_t count;
 } MoveArray;
@@ -156,7 +158,7 @@ bool is_piece_in_column(uint64_t piece_position, size_t col);
 size_t get_piece_column(uint64_t piece_position);
 MoveArray* create_move_array(void);
 void destroy_move_array(MoveArray* move_array);
-void insert_move_into_array(MoveArray* arr, Move item);
+void insert_move_into_array(MoveArray* arr, Move* item);
 void insert_moves_into_array(MoveArray* arr, PIECE_INDEX piece_type, uint64_t previous_position, uint64_t next_positions);
 uint64_t get_pseudomoves_from_white_pawn(Board* board, uint64_t piece_position, uint64_t same_color_occupied_squares, uint64_t opposite_color_occupied_squares);
 uint64_t get_pseudomoves_from_black_pawn(Board* board, uint64_t piece_position, uint64_t same_color_occupied_squares, uint64_t opposite_color_occupied_squares);
@@ -167,8 +169,6 @@ uint64_t get_pseudomoves_from_queen(uint64_t piece_position, uint64_t same_color
 uint64_t get_pseudomoves_from_king(uint64_t piece_position, uint64_t same_color_occupied_squares);
 void insert_pseudomoves_from_piece(Board* board, MoveArray* move_array, PIECE_INDEX piece_type, uint64_t piece_position, uint64_t same_color_occupied_squares, uint64_t opposite_color_occupied_squares);
 MoveArray* get_pseudomoves_from_board(Board* board);
-bool is_square_attacked(uint64_t piece_position, Board* board);
-MoveArray* get_moves_from_board(Board* board);
 
 
 #endif // CHESS_H
