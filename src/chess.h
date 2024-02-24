@@ -29,6 +29,8 @@
 
 
 #define ABS(x) ((x) >= 0 ? (x) : -(x))
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
 
 
 /**
@@ -150,6 +152,7 @@ size_t count_bits(uint64_t number);
 uint64_t get_all_occupied_squares(Board* board);
 uint64_t get_white_occupied_squares(Board* board);
 uint64_t get_black_occupied_squares(Board* board);
+uint64_t get_occupied_squares(Board* board);
 PositionArray* get_pieces_positions(uint64_t pieces);
 void destroy_position_array(PositionArray* position_array);
 bool is_piece_in_row(uint64_t piece_position, size_t row);
@@ -169,6 +172,11 @@ uint64_t get_pseudomoves_from_queen(uint64_t piece_position, uint64_t same_color
 uint64_t get_pseudomoves_from_king(uint64_t piece_position, uint64_t same_color_occupied_squares);
 void insert_pseudomoves_from_piece(Board* board, MoveArray* move_array, PIECE_INDEX piece_type, uint64_t piece_position, uint64_t same_color_occupied_squares, uint64_t opposite_color_occupied_squares);
 MoveArray* get_pseudomoves_from_board(Board* board);
+bool is_square_attacked_by_pawns(uint64_t piece_position, Board* board, bool attacking_side);
+bool is_square_attacked_by_rooks(uint64_t piece_position, Board* board, bool attacking_side, uint64_t occupied_squares);
+bool is_square_attacked_by_knights(uint64_t piece_position, Board* board, bool attacking_side);
+bool is_square_attacked_by_bishops(uint64_t piece_position, Board* board, bool attacking_side, uint64_t occupied_squares);
+bool is_square_attacked_by_queens(uint64_t piece_position, Board* board, bool attacking_side, uint64_t occupied_squares);
 bool is_square_attacked(uint64_t piece_position, Board* board, bool attacking_side);
 MoveArray* get_moves_from_board(Board* board);
 

@@ -126,6 +126,12 @@ uint64_t get_black_occupied_squares(Board* board)
 }
 
 
+uint64_t get_occupied_squares(Board* board)
+{
+    return get_white_occupied_squares(board) & get_black_occupied_squares(board);
+}
+
+
 PositionArray* get_pieces_positions(uint64_t pieces)
 {
     size_t piece_count = count_bits(pieces);
@@ -325,7 +331,7 @@ uint64_t get_pseudomoves_from_black_pawn(Board* board, uint64_t piece_position, 
     }
     // Eat to the right
     if (!is_piece_in_column(piece_position, 8)) {
-        potential_new_position = piece_position >> 8;
+        potential_new_position = piece_position >> 9;
         if ((potential_new_position & opposite_color_occupied_squares) != 0ULL || (board->en_passant && board->en_passant_square == potential_new_position)) {
             found_positions |= potential_new_position;
         }
@@ -549,15 +555,80 @@ MoveArray* get_pseudomoves_from_board(Board* board)
 }
 
 
-// TODO
-bool is_square_attacked(uint64_t piece_position, Board* board, bool attacking_side)
+bool is_square_attacked_by_pawns(uint64_t square, Board* board, bool attacking_side)
 {
-    size_t starting_index = attacking_side == WHITE_TURN ? 0 : (N_PIECES / 2);
-    size_t ending_index = starting_index + N_PIECES / 2;
-    (void) piece_position;
-    (void) board;
-    (void) ending_index;
-    return false; // placeholder
+    PositionArray* pawn_positions   = get_pieces_positions(board->pieces[0 + 6 * !attacking_side]);
+
+    if (attacking_side == WHITE_TURN) {
+        for (size_t i = 0; i < pawn_positions->count; ++i) {
+            uint64_t pawn_position = pawn_positions->positions[i];
+            // Left
+            if (!is_piece_in_column(square, 1) && (pawn_position << 9 == square)) {
+                return true;
+            }
+            // Right
+            if (!is_piece_in_column(square, 8) && (pawn_position << 7 == square)) {
+                return true;
+            }
+        }
+    } else {
+        for (size_t i = 0; i < pawn_positions->count; ++i) {
+            uint64_t pawn_position = pawn_positions->positions[i];
+            // Left
+            if (!is_piece_in_column(square, 1) && (pawn_position >> 7 == square)) {
+                return true;
+            }
+            // Right
+            if (!is_piece_in_column(square, 8) && (pawn_position >> 9 == square)) {
+                return true;
+            }
+        }
+    }
+    destroy_position_array(pawn_positions);
+    return false;
+}
+
+
+bool is_square_attacked_by_rooks(uint64_t square, Board* board, bool attacking_side, uint64_t occupied_squares)
+{
+    PositionArray* rook_positions   = get_pieces_positions(board->pieces[0 + 6 * !attacking_side]);
+    size_t square_row = get_piece_row(square);
+    size_t square_column = get_piece_column(square);
+
+    for (size_t i = 0; i < rook_positions->count; ++i) {
+        uint64_t rook_position = rook_positions->positions[i];
+        size_t rook_row = get_piece_row(rook_position);
+        size_t rook_column = get_piece_column(rook_position);
+        if (rook_row == square_row) {
+            for (size_t current_square = MIN(rook_column, square_column) >> 1; current_square != MAX(rook_column, square_column); current_square >>= 1) {
+                if ((current_square & occupied_squares) > 0) {
+                    return true;
+                }
+            }
+        }
+        if (rook_column == square_column) {
+            for (size_t current_square = MIN(rook_row, square_row) << 8; current_square != MAX(rook_row, square_row); current_square <<= 8) {
+                if ((current_square & occupied_squares) > 0) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    destroy_position_array(rook_positions);
+    return false;
+}
+
+
+bool is_square_attacked(uint64_t square, Board* board, bool attacking_side)
+{
+    uint64_t occupied_squares = get_occupied_squares(board);
+
+    return is_square_attacked_by_pawns(square, board, attacking_side) ||
+           is_square_attacked_by_rooks(square, board, attacking_side, occupied_squares) ||
+           is_square_attacked_by_knights(square, board, attacking_side) ||
+           is_square_attacked_by_bishops(square, board, attacking_side, occupied_squares) ||
+           is_square_attacked_by_queens(square, board, attacking_side, occupied_squares);
 }
 
 
@@ -569,7 +640,7 @@ MoveArray* get_moves_from_board(Board* board)
 
     size_t king_index = board->turn == WHITE_TURN ? W_KING_I : B_KING_I;
 
-    // This is wrong, I'm checking if my own pieces attack my own king
+    // This is wrong, I'm checking if my own pieces (?) attack my own king
     // I need to modify is_square_attacked function
     bool is_king_in_check = is_square_attacked(board->pieces[king_index], board, !board->turn);
 
