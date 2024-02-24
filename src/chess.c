@@ -620,6 +620,35 @@ bool is_square_attacked_by_rooks(uint64_t square, Board* board, bool attacking_s
 }
 
 
+bool is_square_attacked_by_knights(uint64_t piece_position, Board *board, bool attacking_side)
+{
+    (void) piece_position;
+    (void) board;
+    (void) attacking_side;
+    return false;
+}
+
+
+bool is_square_attacked_by_bishops(uint64_t piece_position, Board *board, bool attacking_side, uint64_t occupied_squares)
+{
+    (void) piece_position;
+    (void) board;
+    (void) attacking_side;
+    (void) occupied_squares;
+    return false;
+}
+
+
+bool is_square_attacked_by_queens(uint64_t piece_position, Board *board, bool attacking_side, uint64_t occupied_squares)
+{
+    (void) piece_position;
+    (void) board;
+    (void) attacking_side;
+    (void) occupied_squares;
+    return false;
+}
+
+
 bool is_square_attacked(uint64_t square, Board* board, bool attacking_side)
 {
     uint64_t occupied_squares = get_occupied_squares(board);
