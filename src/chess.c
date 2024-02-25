@@ -567,10 +567,12 @@ bool is_square_attacked_by_pawns(uint64_t square, Board* board, bool attacking_s
             // Left
             if (!is_piece_in_column(square, 1) && (pawn_position << 9 == square)) {
                 return true;
+                destroy_position_array(pawn_positions);
             }
             // Right
             if (!is_piece_in_column(square, 8) && (pawn_position << 7 == square)) {
                 return true;
+                destroy_position_array(pawn_positions);
             }
         }
     } else {
@@ -579,10 +581,12 @@ bool is_square_attacked_by_pawns(uint64_t square, Board* board, bool attacking_s
             // Left
             if (!is_piece_in_column(square, 1) && (pawn_position >> 7 == square)) {
                 return true;
+                destroy_position_array(pawn_positions);
             }
             // Right
             if (!is_piece_in_column(square, 8) && (pawn_position >> 9 == square)) {
                 return true;
+                destroy_position_array(pawn_positions);
             }
         }
     }
@@ -604,6 +608,7 @@ bool is_square_attacked_by_rooks(uint64_t square, Board* board, bool attacking_s
         if (rook_row == square_row) {
             for (size_t current_square = MIN(rook_column, square_column) >> 1; current_square != MAX(rook_column, square_column); current_square >>= 1) {
                 if ((current_square & occupied_squares) > 0) {
+                    destroy_position_array(rook_positions);
                     return true;
                 }
             }
@@ -611,6 +616,7 @@ bool is_square_attacked_by_rooks(uint64_t square, Board* board, bool attacking_s
         if (rook_column == square_column) {
             for (size_t current_square = MIN(rook_row, square_row) << 8; current_square != MAX(rook_row, square_row); current_square <<= 8) {
                 if ((current_square & occupied_squares) > 0) {
+                    destroy_position_array(rook_positions);
                     return true;
                 }
             }
@@ -629,6 +635,7 @@ bool is_square_attacked_by_knights(uint64_t square, Board *board, bool attacking
         uint64_t knight_position = knight_positions->positions[i];
         uint64_t knight_pseudomoves = get_pseudomoves_from_knight(knight_position, 0);
         if ((knight_pseudomoves & square) > 0) {
+            destroy_position_array(knight_positions);
             return true;
         }
     }
@@ -694,5 +701,6 @@ MoveArray* get_moves_from_board(Board* board)
     // TODO: Maybe move previous logic to two separate functions?
 
     destroy_move_array(pseudos);
+    destroy_move_array(moves);
     return moves;
 }
