@@ -385,7 +385,9 @@ uint64_t get_pseudomoves_from_knight(uint64_t piece_position, uint64_t same_colo
         if (potential_new_position > 0 && (potential_new_position & same_color_occupied_squares) == 0) {
             int col_difference = piece_col - (int) get_piece_column(potential_new_position);
             int row_difference = piece_row - (int) get_piece_row(potential_new_position);
-            if ((ABS(col_difference) == 1 && ABS(row_difference) == 2) || (ABS(col_difference) == 2 && ABS(row_difference) == 1)) {
+            col_difference = ABS(col_difference);
+            row_difference = ABS(row_difference);
+            if ((col_difference == 1 && row_difference == 2) || (col_difference == 2 && row_difference == 1)) {
                 found_positions |= potential_new_position;
             }
         }
