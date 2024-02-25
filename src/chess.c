@@ -593,7 +593,7 @@ bool is_square_attacked_by_pawns(uint64_t square, Board* board, bool attacking_s
 
 bool is_square_attacked_by_rooks(uint64_t square, Board* board, bool attacking_side, uint64_t occupied_squares)
 {
-    PositionArray* rook_positions   = get_pieces_positions(board->pieces[0 + 6 * !attacking_side]);
+    PositionArray* rook_positions   = get_pieces_positions(board->pieces[1 + 6 * !attacking_side]);
     size_t square_row = get_piece_row(square);
     size_t square_column = get_piece_column(square);
 
@@ -622,16 +622,22 @@ bool is_square_attacked_by_rooks(uint64_t square, Board* board, bool attacking_s
 }
 
 
-bool is_square_attacked_by_knights(uint64_t piece_position, Board *board, bool attacking_side)
+bool is_square_attacked_by_knights(uint64_t square, Board *board, bool attacking_side)
 {
-    (void) piece_position;
-    (void) board;
-    (void) attacking_side;
+    PositionArray* knight_positions = get_pieces_positions(board->pieces[2 + 6 * !attacking_side]);
+    for (size_t i = 0; i < knight_positions->count; ++i) {
+        uint64_t knight_position = knight_positions->positions[i];
+        uint64_t knight_pseudomoves = get_pseudomoves_from_knight(knight_position, 0);
+        if ((knight_pseudomoves & square) > 0) {
+            return true;
+        }
+    }
+    destroy_position_array(knight_positions);
     return false;
 }
 
 
-bool is_square_attacked_by_bishops(uint64_t piece_position, Board *board, bool attacking_side, uint64_t occupied_squares)
+bool is_square_attacked_by_bishops(uint64_t square, Board *board, bool attacking_side, uint64_t occupied_squares)
 {
     (void) piece_position;
     (void) board;
@@ -641,7 +647,7 @@ bool is_square_attacked_by_bishops(uint64_t piece_position, Board *board, bool a
 }
 
 
-bool is_square_attacked_by_queens(uint64_t piece_position, Board *board, bool attacking_side, uint64_t occupied_squares)
+bool is_square_attacked_by_queens(uint64_t square, Board *board, bool attacking_side, uint64_t occupied_squares)
 {
     (void) piece_position;
     (void) board;
